@@ -24,6 +24,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 public class RecordingService extends Service {
@@ -115,6 +116,8 @@ public class RecordingService extends Service {
     int frameCount() {
         return buffer.frames;
     }
+
+    int byteCount() { return buffer.byteCount; }
 
     private MediaFormat makeFormat() {
         MediaFormat format = new MediaFormat();

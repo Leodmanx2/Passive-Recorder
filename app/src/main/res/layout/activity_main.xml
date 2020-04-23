@@ -28,6 +28,11 @@
             android:layout_height="wrap_content"
             android:text="@string/explanation" />
 
+        <TextView
+            android:id="@+id/statistics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="18dp" />

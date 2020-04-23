@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Passive Recorder</string>
     <string name="save_selection">Save Selection</string>
-    <string name="explanation">The format for the following fields is \"HH:MM:SS.mmm\". The hour and minute fields are mandatory. The rest are optional. The maximum capacity is 5 hours.\nTracking of the capacity used needs to be re-implemented.</string>
+    <string name="explanation">The format for the following fields is \"HH:MM:SS.mmm\". The hour and minute fields are mandatory. The rest are optional. The maximum capacity is 5 hours.</string>
 </resources>

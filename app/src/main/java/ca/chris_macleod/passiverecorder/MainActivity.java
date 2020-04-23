@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,8 +13,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
@@ -27,6 +32,10 @@ public class MainActivity extends Activity {
     private RecordingServiceInterface service;
     private Button saveButton;
     private ToggleButton toggleButton;
+    private TextView statistics;
+    boolean refresh;
+    Handler handler;
+    Runnable refreshFunction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +50,8 @@ public class MainActivity extends Activity {
                 toggleButton.setChecked(true);
                 startTime.setEnabled(true);
                 endTime.setEnabled(true);
+                refresh = true;
+                handler.post(refreshFunction);
                 Log.i(TAG, "service connected");
             }
 
@@ -59,6 +70,7 @@ public class MainActivity extends Activity {
         saveButton = findViewById(R.id.saveButton);
         startTime = findViewById(R.id.startTime);
         endTime = findViewById(R.id.endTime);
+        statistics = findViewById(R.id.statistics);
 
         watcher = new TextWatcher() {
             @Override
@@ -83,6 +95,21 @@ public class MainActivity extends Activity {
         saveButton.setEnabled(false);
         startTime.setEnabled(false);
         endTime.setEnabled(false);
+
+        handler = new Handler(getMainLooper());
+
+        refreshFunction = new Runnable() {
+            @Override
+            public void run() {
+                if(refresh) {
+                    // TODO: Use readable units
+                    long seconds = TimeUnit.MILLISECONDS.toSeconds(service.frameCount() * AACFrame.milliseconds);
+                    String s = String.format("There are %d seconds of audio in memory, consuming %d bytes.", seconds, service.byteCount());
+                    statistics.setText(s);
+                    handler.postDelayed(this, 1000);
+                }
+            }
+        };
 
         Intent intent = new Intent(this, RecordingService.class);
         bindService(intent, connection, 0);
@@ -131,6 +158,9 @@ public class MainActivity extends Activity {
     }
 
     private void unbind() {
+        refresh = false;
+        statistics.setText("There are 0 seconds of audio in memory, consuming 0 bytes.");
+
         Intent intent = new Intent(this, RecordingService.class);
         unbindService(connection);
         stopService(intent);
@@ -139,5 +169,20 @@ public class MainActivity extends Activity {
         saveButton.setEnabled(false);
         startTime.setEnabled(false);
         endTime.setEnabled(false);
+    }
+
+    @Override
+    protected void onPause() {
+        refresh = false;
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(service != null) {
+            refresh = true;
+            handler.post(refreshFunction);
+        }
     }
 }

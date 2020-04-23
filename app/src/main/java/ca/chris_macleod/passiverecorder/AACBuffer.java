@@ -1,11 +1,13 @@
 package ca.chris_macleod.passiverecorder;
 
+import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 
 class AACBuffer {
     private final AACFrame[] data;
     int frames;
-    private int index; // Normalized with te module operator on use
+    private int index; // Normalized with the module operator on use
+    int byteCount;
 
     AACBuffer(int maxFrames) {
         data = new AACFrame[maxFrames];
@@ -13,6 +15,12 @@ class AACBuffer {
     }
 
     void insert(AACFrame frame) {
+        final AACFrame existing = data[index % data.length];
+        if(existing != null) {
+            byteCount -= existing.data.length;
+        }
+        byteCount += frame.data.length;
+
         data[index % data.length] = frame;
         if (frames < data.length) ++frames;
         ++index;
@@ -32,4 +40,5 @@ class AACBuffer {
         }
         return result;
     }
+
 }
