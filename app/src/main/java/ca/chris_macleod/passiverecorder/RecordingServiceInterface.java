@@ -12,8 +12,8 @@ class RecordingServiceInterface extends Binder {
         this.service = service;
     }
 
-    void save(long oldestOffset, long newestOffset, TimeUnit unit) {
-        service.save(oldestOffset, newestOffset, unit);
+    boolean save(long oldestOffset, long newestOffset, TimeUnit unit) {
+        return service.save(oldestOffset, newestOffset, unit);
     }
 
     int frameCount() {

@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.Observable;
@@ -80,7 +81,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                checkText(s);
+                checkText();
             }
 
             @Override
@@ -106,6 +107,7 @@ public class MainActivity extends Activity {
                     long seconds = TimeUnit.MILLISECONDS.toSeconds(service.frameCount() * AACFrame.milliseconds);
                     String s = String.format("There are %d seconds of audio in memory, consuming %d bytes.", seconds, service.byteCount());
                     statistics.setText(s);
+                    checkText();
                     handler.postDelayed(this, 1000);
                 }
             }
@@ -115,12 +117,13 @@ public class MainActivity extends Activity {
         bindService(intent, connection, 0);
     }
 
-    private void checkText(CharSequence s) {
+    private void checkText() {
         if (service != null) {
-            TimeStamp stamp = new TimeStamp(s);
-            if (stamp.valid()) {
+            TimeStamp startStamp = new TimeStamp(startTime.getText());
+            TimeStamp endStamp = new TimeStamp(endTime.getText());
+            if (startStamp.valid() && endStamp.valid()) {
                 long bufferLength = service.frameCount() * AACFrame.milliseconds;
-                if (stamp.toMilliseconds() < bufferLength) {
+                if (endStamp.toMilliseconds() < startStamp.toMilliseconds() && startStamp.toMilliseconds() < bufferLength) {
                     saveButton.setEnabled(true);
                 }
             } else {
@@ -144,7 +147,29 @@ public class MainActivity extends Activity {
         TimeStamp endStamp = new TimeStamp(endText.getText());
         final long end = endStamp.toMilliseconds();
 
-        service.save(start, end, TimeUnit.MILLISECONDS);
+        // Look at this garbage.
+        // TODO: De-Java this
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                if(service.save(start, end, TimeUnit.MILLISECONDS)) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "audio saved", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "could not save", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        };
+        thread.start();
     }
 
     public void onToggleButtonClick(View view) {

@@ -152,9 +152,7 @@ public class RecordingService extends Service {
         return notificationBuilder.build();
     }
 
-    void save(long start, long end, TimeUnit unit) {
-        // TODO: Do I/O on a worker thread
-        // ^This is only a pain because of the Toasts
+    boolean save(long start, long end, TimeUnit unit) {
         try {
             // TODO: Replace getExternalStorageDirectory(), it's deprecated
             String filename = String.format("%s%s%s", Environment.getExternalStorageDirectory(), File.separator, "passiverecordertest.aac");
@@ -166,11 +164,12 @@ public class RecordingService extends Service {
                 outFile.write(frame.data);
             }
 
-            Toast.makeText(getApplicationContext(), "audio saved", Toast.LENGTH_SHORT).show();
+            return true;
+
 
         } catch (IOException e) {
             Log.e(TAG, e.toString());
-            Toast.makeText(getApplicationContext(), "could not save", Toast.LENGTH_SHORT).show();
+            return false;
         }
     }
 }

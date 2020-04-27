@@ -1,6 +1,5 @@
 package ca.chris_macleod.passiverecorder;
 
-import java.util.Observable;
 import java.util.concurrent.TimeUnit;
 
 class AACBuffer {
@@ -14,7 +13,7 @@ class AACBuffer {
         index = 0;
     }
 
-    void insert(AACFrame frame) {
+    synchronized void insert(AACFrame frame) {
         final AACFrame existing = data[index % data.length];
         if(existing != null) {
             byteCount -= existing.data.length;
@@ -26,7 +25,7 @@ class AACBuffer {
         ++index;
     }
 
-    AACFrame[] range(long oldestOffset, long newestOffset, TimeUnit unit) {
+    synchronized AACFrame[] range(long oldestOffset, long newestOffset, TimeUnit unit) {
         if (BuildConfig.DEBUG && frames == 0) throw new AssertionError();
         if (BuildConfig.DEBUG && oldestOffset < newestOffset) throw new AssertionError();
         int start = (int) (unit.toMillis(oldestOffset) / AACFrame.milliseconds);
