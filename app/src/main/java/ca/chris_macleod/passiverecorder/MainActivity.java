@@ -1,9 +1,12 @@
 package ca.chris_macleod.passiverecorder;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,6 +20,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.FutureTask;
@@ -25,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int PERMISSIONS_BASIC = 1;
 
     ServiceConnection connection;
     TextWatcher watcher;
@@ -40,9 +49,19 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // TODO: Request permissions, and check for them every time they're used
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // TODO: Permissions are constantly required but can be retracted at any time. Mitigate.
+        // Also, clean this mess up.
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P && ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.FOREGROUND_SERVICE}, PERMISSIONS_BASIC);
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_BASIC);
+            }
+        }
 
         connection = new ServiceConnection() {
             @Override
@@ -139,6 +158,11 @@ public class MainActivity extends Activity {
     }
 
     public void onSaveButtonClick(View view) {
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getApplicationContext(), "app does not have permission to write to storage", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         EditText startText = findViewById(R.id.startTime);
         TimeStamp startStamp = new TimeStamp(startText.getText());
         final long start = startStamp.toMilliseconds();
@@ -208,6 +232,19 @@ public class MainActivity extends Activity {
         if(service != null) {
             refresh = true;
             handler.post(refreshFunction);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // TODO: Do this with less magic
+        if (requestCode == PERMISSIONS_BASIC && grantResults.length > 0) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) { // Record permission
+                finishAffinity();
+            }
+            if (grantResults.length > 2 && grantResults[2] != PackageManager.PERMISSION_GRANTED) { // Service permission
+                finishAffinity();
+            }
         }
     }
 }
