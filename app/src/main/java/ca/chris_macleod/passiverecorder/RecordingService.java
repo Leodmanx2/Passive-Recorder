@@ -5,6 +5,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -14,15 +16,22 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class RecordingService extends Service {
@@ -155,14 +164,24 @@ public class RecordingService extends Service {
 
     boolean save(long start, long end, TimeUnit unit) {
         try {
-            // TODO: Replace getExternalStorageDirectory(), it's deprecated
-            String filename = String.format("%s%s%s", Environment.getExternalStorageDirectory(), File.separator, "passiverecordertest.aac");
-            FileOutputStream outFile = new FileOutputStream(filename);
+            OutputStream outFile;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentResolver resolver = getApplicationContext().getContentResolver();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, LocalDateTime.now() + ".aac");
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, MediaFormat.MIMETYPE_AUDIO_AAC);
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Recordings"); // API 29 only, hence the deprecated method below
+                Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                outFile = resolver.openOutputStream(Objects.requireNonNull(uri));
+            } else {
+                String filename = String.format("%s/Recordings/%s.aac", Environment.getExternalStorageDirectory(), LocalDateTime.now());
+                outFile = new FileOutputStream(filename);
+            }
 
             AACFrame[] span = buffer.range(start, end, unit);
 
             for (AACFrame frame : span) {
-                outFile.write(frame.data);
+                Objects.requireNonNull(outFile).write(frame.data);
             }
 
             return true;
