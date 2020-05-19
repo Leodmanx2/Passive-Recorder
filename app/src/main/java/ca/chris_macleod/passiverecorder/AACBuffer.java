@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 class AACBuffer {
     private final AACFrame[] data;
     int frames;
-    private int index; // Normalized with the module operator on use
     int byteCount;
+    private int index; // Normalized with the module operator on use
 
     AACBuffer(int maxFrames) {
         data = new AACFrame[maxFrames];
@@ -15,7 +15,7 @@ class AACBuffer {
 
     synchronized void insert(AACFrame frame) {
         final AACFrame existing = data[index % data.length];
-        if(existing != null) {
+        if (existing != null) {
             byteCount -= existing.data.length;
         }
         byteCount += frame.data.length;

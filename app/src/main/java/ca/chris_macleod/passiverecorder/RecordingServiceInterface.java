@@ -2,7 +2,6 @@ package ca.chris_macleod.passiverecorder;
 
 import android.os.Binder;
 
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 class RecordingServiceInterface extends Binder {

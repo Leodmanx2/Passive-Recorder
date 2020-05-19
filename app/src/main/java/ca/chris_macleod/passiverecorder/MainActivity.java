@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,10 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.concurrent.FutureTask;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
@@ -39,13 +35,13 @@ public class MainActivity extends Activity {
     TextWatcher watcher;
     EditText startTime;
     EditText endTime;
+    boolean refresh;
+    Handler handler;
+    Runnable refreshFunction;
     private RecordingServiceInterface service;
     private Button saveButton;
     private ToggleButton toggleButton;
     private TextView statistics;
-    boolean refresh;
-    Handler handler;
-    Runnable refreshFunction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +50,7 @@ public class MainActivity extends Activity {
 
         // TODO: Permissions are constantly required but can be retracted at any time. Mitigate.
         // Also, clean this mess up.
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P && ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.FOREGROUND_SERVICE}, PERMISSIONS_BASIC);
@@ -121,10 +117,9 @@ public class MainActivity extends Activity {
         refreshFunction = new Runnable() {
             @Override
             public void run() {
-                if(refresh) {
-                    // TODO: Use readable units
-                    long seconds = TimeUnit.MILLISECONDS.toSeconds(service.frameCount() * AACFrame.milliseconds);
-                    String s = String.format("There are %d seconds of audio in memory, consuming %d bytes.", seconds, service.byteCount());
+                if (refresh) {
+                    Duration duration = Duration.ofMillis(service.frameCount() * AACFrame.milliseconds);
+                    String s = String.format("There are %s of audio in memory, consuming %d bytes.", duration, service.byteCount());
                     statistics.setText(s);
                     checkText();
                     handler.postDelayed(this, 1000);
@@ -158,7 +153,7 @@ public class MainActivity extends Activity {
     }
 
     public void onSaveButtonClick(View view) {
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(getApplicationContext(), "app does not have permission to write to storage", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -176,7 +171,7 @@ public class MainActivity extends Activity {
         Thread thread = new Thread() {
             @Override
             public void run() {
-                if(service.save(start, end, TimeUnit.MILLISECONDS)) {
+                if (service.save(start, end, TimeUnit.MILLISECONDS)) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -229,7 +224,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(service != null) {
+        if (service != null) {
             refresh = true;
             handler.post(refreshFunction);
         }
