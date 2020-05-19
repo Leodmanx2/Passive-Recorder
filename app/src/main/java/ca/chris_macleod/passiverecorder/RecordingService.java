@@ -19,12 +19,10 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 public class RecordingService extends Service {
@@ -117,7 +115,9 @@ public class RecordingService extends Service {
         return buffer.frames;
     }
 
-    int byteCount() { return buffer.byteCount; }
+    int byteCount() {
+        return buffer.byteCount;
+    }
 
     private MediaFormat makeFormat() {
         MediaFormat format = new MediaFormat();
@@ -143,11 +143,12 @@ public class RecordingService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
+        String appName = getResources().getString(R.string.app_name);
         Notification.Builder notificationBuilder = new Notification.Builder(this, chan.getId());
         notificationBuilder.setOngoing(true);
         notificationBuilder.setSmallIcon(R.drawable.ic_launcher_foreground);
-        notificationBuilder.setContentTitle("Passive Recorder");
-        notificationBuilder.setContentText(R.string.app_name + " is running in the background");
+        notificationBuilder.setContentTitle(appName);
+        notificationBuilder.setContentText(appName + " is running in the background");
         notificationBuilder.setContentIntent(pendingIntent);
         return notificationBuilder.build();
     }
