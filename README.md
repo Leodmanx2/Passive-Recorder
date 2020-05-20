@@ -15,8 +15,9 @@ Passive Recorder and it responds much better. The third issue I had with Echo
 was its memory usage; it buffers raw audio samples. Passive Recorder buffers
 AAC packets. Given the default (and currently non-configurable) settings,
 Passive Recorder uses less than a fifth of the memory while maintaining "low"
-battery usage. (That's what Android Studio reports, anyway. I have not run my
-own benchmarks.)
+battery usage. That's what Android Studio reports, anyway. After running each
+app on my phone for a period of two days, my own phone reports both Echo and
+Passive Recording as having used 2% of the battery.
 
 Development is on indefinite hiatus now that I know the FM tuner problem can't
 be worked around. Features that were on the roadmap which I have not
