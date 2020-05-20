@@ -23,7 +23,6 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends Activity {
@@ -118,8 +117,11 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 if (refresh) {
-                    Duration duration = Duration.ofMillis(service.frameCount() * AACFrame.milliseconds);
-                    String s = String.format("There are %s of audio in memory, consuming %d bytes.", duration, service.byteCount());
+                    long total = service.frameCount() * AACFrame.milliseconds;
+                    long seconds = (total / 1000) % 60;
+                    long minutes = (total / (60000)) % 60;
+                    long hours = (total / (3600000)) % 24;
+                    String s = String.format("There are %d hours, %d minutes, and %d seconds of audio in memory, consuming %d bytes.", hours, minutes, seconds, service.byteCount());
                     statistics.setText(s);
                     checkText();
                     handler.postDelayed(this, 1000);
@@ -203,7 +205,7 @@ public class MainActivity extends Activity {
 
     private void unbind() {
         refresh = false;
-        statistics.setText("There are 0 seconds of audio in memory, consuming 0 bytes.");
+        statistics.setText(getResources().getString(R.string.statistics));
 
         Intent intent = new Intent(this, RecordingService.class);
         unbindService(connection);
