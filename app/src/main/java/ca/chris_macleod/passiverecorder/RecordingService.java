@@ -155,7 +155,7 @@ public class RecordingService extends Service {
         String appName = getResources().getString(R.string.app_name);
         Notification.Builder notificationBuilder = new Notification.Builder(this, chan.getId());
         notificationBuilder.setOngoing(true);
-        notificationBuilder.setSmallIcon(R.drawable.ic_launcher_foreground);
+        notificationBuilder.setSmallIcon(R.drawable.ic_stat_name);
         notificationBuilder.setContentTitle(appName);
         notificationBuilder.setContentText(appName + " is running in the background");
         notificationBuilder.setContentIntent(pendingIntent);
