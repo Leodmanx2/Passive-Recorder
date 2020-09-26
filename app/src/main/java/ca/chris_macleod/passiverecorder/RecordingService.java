@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -170,12 +171,14 @@ public class RecordingService extends Service {
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, LocalDateTime.now() + ".aac");
                 contentValues.put(MediaStore.MediaColumns.MIME_TYPE, MediaFormat.MIMETYPE_AUDIO_AAC);
-                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Recordings"); // API 29 only, hence the deprecated method below
-                Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/Recordings"); // API 29 only, hence the deprecated method below
+                Uri uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues);
                 outFile = resolver.openOutputStream(Objects.requireNonNull(uri));
             } else {
-                String filename = String.format("%s/Recordings/%s.aac", Environment.getExternalStorageDirectory(), LocalDateTime.now());
-                outFile = new FileOutputStream(filename);
+                String path = String.format("%s/Music/Recordings/%s.aac", Environment.getExternalStorageDirectory(), LocalDateTime.now());
+                File newFile = new File(path);
+                newFile.getParentFile().mkdirs();
+                outFile = new FileOutputStream(newFile);
             }
 
             AACFrame[] span = buffer.range(start, end, unit);
