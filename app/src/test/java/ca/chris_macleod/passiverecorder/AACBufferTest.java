@@ -1,12 +1,12 @@
 package ca.chris_macleod.passiverecorder;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
 public class AACBufferTest {
-    @Test
+    @org.junit.jupiter.api.Test
     public void insertConsistentWithRangeAccess_fullBuffer() {
         final int frameCount = 4;
         AACBuffer buffer = new AACBuffer(frameCount);
@@ -38,7 +38,7 @@ public class AACBufferTest {
         Assert.assertArrayEquals(frames, retrieved);
     }
 
-    @Test
+    @org.junit.jupiter.api.Test
     public void insertConsistentWithRangeAccess_cyclingBuffer() {
         final int frameCount = 4;
         AACBuffer buffer = new AACBuffer(frameCount);

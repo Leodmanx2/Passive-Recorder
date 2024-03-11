@@ -1,5 +1,7 @@
 package ca.chris_macleod.passiverecorder;
 
+import android.os.Build;
+
 import java.util.concurrent.TimeUnit;
 
 class AACBuffer {
@@ -26,8 +28,6 @@ class AACBuffer {
     }
 
     synchronized AACFrame[] range(long oldestOffset, long newestOffset, TimeUnit unit) {
-        if (BuildConfig.DEBUG && frames == 0) throw new AssertionError();
-        if (BuildConfig.DEBUG && oldestOffset < newestOffset) throw new AssertionError();
         int start = (int) (unit.toMillis(oldestOffset) / AACFrame.milliseconds);
         int end = (int) (unit.toMillis(newestOffset) / AACFrame.milliseconds);
         if (frames < start) throw new IndexOutOfBoundsException();

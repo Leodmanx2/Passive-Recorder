@@ -9,6 +9,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -17,21 +18,17 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import androidx.core.app.ActivityCompat;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -75,6 +72,16 @@ public class RecordingService extends Service {
 
         buffer = new AACBuffer(MAX_FRAMES);
 
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         recorder = new AudioRecord(MediaRecorder.AudioSource.UNPROCESSED, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 8192);
         recorder.startRecording();
 
@@ -117,7 +124,7 @@ public class RecordingService extends Service {
         recorder.stop();
         codec.release();
         recorder.release();
-        stopForeground(true);
+        stopForeground(STOP_FOREGROUND_REMOVE);
         super.onDestroy();
     }
 
@@ -151,7 +158,7 @@ public class RecordingService extends Service {
         manager.createNotificationChannel(chan);
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         String appName = getResources().getString(R.string.app_name);
         Notification.Builder notificationBuilder = new Notification.Builder(this, chan.getId());
@@ -163,36 +170,24 @@ public class RecordingService extends Service {
         return notificationBuilder.build();
     }
 
-    boolean save(long start, long end, TimeUnit unit) {
-        try {
-            OutputStream outFile;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentResolver resolver = getApplicationContext().getContentResolver();
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, LocalDateTime.now() + ".aac");
-                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, MediaFormat.MIMETYPE_AUDIO_AAC);
-                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/Recordings"); // API 29 only, hence the deprecated method below
-                Uri uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues);
-                outFile = resolver.openOutputStream(Objects.requireNonNull(uri));
-            } else {
-                String path = String.format("%s/Music/Recordings/%s.aac", Environment.getExternalStorageDirectory(), LocalDateTime.now());
-                File newFile = new File(path);
-                newFile.getParentFile().mkdirs();
-                outFile = new FileOutputStream(newFile);
-            }
+    boolean save(long start, long end) {
+        ContentResolver resolver = getApplicationContext().getContentResolver();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, LocalDateTime.now() + ".aac");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, MediaFormat.MIMETYPE_AUDIO_AAC);
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/Recordings"); // API 29 only, hence the deprecated method below
+        Uri uri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues);
 
-            AACFrame[] span = buffer.range(start, end, unit);
+        AACFrame[] span = buffer.range(start, end, TimeUnit.MILLISECONDS);
 
+        try (OutputStream outFile = resolver.openOutputStream(Objects.requireNonNull(uri))) {
             for (AACFrame frame : span) {
                 Objects.requireNonNull(outFile).write(frame.data);
             }
-
-            return true;
-
-
         } catch (IOException e) {
             Log.e(TAG, e.toString());
             return false;
         }
+        return true;
     }
 }

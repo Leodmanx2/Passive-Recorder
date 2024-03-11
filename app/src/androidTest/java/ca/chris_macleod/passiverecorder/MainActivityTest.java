@@ -9,8 +9,9 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static androidx.test.espresso.Espresso.onView;
@@ -20,7 +21,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
 
 public class MainActivityTest {
     private final static String PACKAGE_NAME = "ca.chris_macleod.passiverecorder";
@@ -28,7 +28,7 @@ public class MainActivityTest {
 
     private UiDevice device;
 
-    @Before
+    @BeforeEach
     public void startMainActivityFromHomeScreen() {
         device = UiDevice.getInstance(getInstrumentation());
         device.pressHome();
@@ -39,16 +39,16 @@ public class MainActivityTest {
 
         PackageManager pm = getApplicationContext().getPackageManager();
         ResolveInfo resolveInfo = pm.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY);
-        assertThat(resolveInfo, notNullValue());
+        MatcherAssert.assertThat(resolveInfo, notNullValue());
         final String launcherPackage = resolveInfo.activityInfo.packageName;
-        assertThat(launcherPackage, notNullValue());
+        MatcherAssert.assertThat(launcherPackage, notNullValue());
         device.wait(Until.hasObject(By.pkg(launcherPackage).depth(0)), DEFAULT_TIMEOUT);
 
         // Launch the app
         Context context = getApplicationContext();
         final Intent intent = context.getPackageManager()
                 .getLaunchIntentForPackage(PACKAGE_NAME);
-        assertThat(intent, notNullValue());
+        MatcherAssert.assertThat(intent, notNullValue());
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // Clear out any previous instances
         context.startActivity(intent);
 
@@ -58,7 +58,7 @@ public class MainActivityTest {
 
     @Test
     public void checkPreconditions() {
-        assertThat(device, notNullValue());
+        MatcherAssert.assertThat(device, notNullValue());
     }
 
     @Test

@@ -31,10 +31,6 @@ class EncoderCallback extends MediaCodec.Callback {
 
     @Override
     public void onOutputBufferAvailable(@NonNull MediaCodec codec, int index, @NonNull MediaCodec.BufferInfo info) {
-        if (BuildConfig.DEBUG) {
-            if ((info.flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == MediaCodec.BUFFER_FLAG_PARTIAL_FRAME)
-                throw new AssertionError();
-        }
         ByteBuffer outputBuffer = codec.getOutputBuffer(index);
         if (outputBuffer != null && info.size > 0) {
             int packetSize = 7 + info.size;
@@ -64,6 +60,6 @@ class EncoderCallback extends MediaCodec.Callback {
 
     @Override
     public void onOutputFormatChanged(@NonNull MediaCodec codec, @NonNull MediaFormat format) {
-        Log.w(TAG, String.format("output format changed to %s", format.toString()));
+        Log.w(TAG, String.format("output format changed to %s", format));
     }
 }

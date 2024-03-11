@@ -19,7 +19,6 @@ class TimeStamp {
 
     @SuppressWarnings("ConstantConditions")
     long toMilliseconds() {
-        if (BuildConfig.DEBUG && !matcher.matches()) throw new AssertionError();
         final String hours = matcher.group(1);
         final String minutes = matcher.group(2);
         final String seconds = matcher.group(3);

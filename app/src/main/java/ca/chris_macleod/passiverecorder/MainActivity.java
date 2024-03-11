@@ -23,7 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
 
@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
         // Also, clean this mess up.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P && ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.FOREGROUND_SERVICE}, PERMISSIONS_BASIC);
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSIONS_BASIC);
@@ -117,11 +117,11 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 if (refresh) {
-                    long total = service.frameCount() * AACFrame.milliseconds;
+                    long total = (long) service.frameCount() * AACFrame.milliseconds;
                     long seconds = (total / 1000) % 60;
                     long minutes = (total / (60000)) % 60;
                     long hours = (total / (3600000)) % 24;
-                    String s = String.format("There are %d hours, %d minutes, and %d seconds of audio in memory, consuming %d bytes.", hours, minutes, seconds, service.byteCount());
+                    String s = String.format(Locale.CANADA, "There are %d hours, %d minutes, and %d seconds of audio in memory, consuming %d bytes.", hours, minutes, seconds, service.byteCount());
                     statistics.setText(s);
                     checkText();
                     handler.postDelayed(this, 1000);
@@ -138,7 +138,7 @@ public class MainActivity extends Activity {
             TimeStamp startStamp = new TimeStamp(startTime.getText());
             TimeStamp endStamp = new TimeStamp(endTime.getText());
             if (startStamp.valid() && endStamp.valid()) {
-                long bufferLength = service.frameCount() * AACFrame.milliseconds;
+                long bufferLength = (long) service.frameCount() * AACFrame.milliseconds;
                 if (endStamp.toMilliseconds() < startStamp.toMilliseconds() && startStamp.toMilliseconds() < bufferLength) {
                     saveButton.setEnabled(true);
                 }
@@ -168,29 +168,11 @@ public class MainActivity extends Activity {
         TimeStamp endStamp = new TimeStamp(endText.getText());
         final long end = endStamp.toMilliseconds();
 
-        // Look at this garbage.
-        // TODO: De-Java this
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                if (service.save(start, end, TimeUnit.MILLISECONDS)) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "audio saved", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "could not save", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-        };
-        thread.start();
+        if (service.save(start, end)) {
+            runOnUiThread(() -> Toast.makeText(getApplicationContext(), "audio saved", Toast.LENGTH_SHORT).show());
+        } else {
+            runOnUiThread(() -> Toast.makeText(getApplicationContext(), "could not save", Toast.LENGTH_SHORT).show());
+        }
     }
 
     public void onToggleButtonClick(View view) {

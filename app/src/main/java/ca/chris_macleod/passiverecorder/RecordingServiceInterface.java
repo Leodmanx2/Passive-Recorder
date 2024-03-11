@@ -2,8 +2,6 @@ package ca.chris_macleod.passiverecorder;
 
 import android.os.Binder;
 
-import java.util.concurrent.TimeUnit;
-
 class RecordingServiceInterface extends Binder {
     final private RecordingService service;
 
@@ -11,8 +9,8 @@ class RecordingServiceInterface extends Binder {
         this.service = service;
     }
 
-    boolean save(long oldestOffset, long newestOffset, TimeUnit unit) {
-        return service.save(oldestOffset, newestOffset, unit);
+    boolean save(long oldestOffset, long newestOffset) {
+        return service.save(oldestOffset, newestOffset);
     }
 
     int frameCount() {
