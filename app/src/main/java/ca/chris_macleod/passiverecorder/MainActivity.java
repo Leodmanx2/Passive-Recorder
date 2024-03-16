@@ -44,9 +44,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate called");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.d(TAG, "onCreate: checking permissions");
         // TODO: Permissions are constantly required but can be retracted at any time. Mitigate.
         // Also, clean this mess up.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
@@ -58,10 +60,15 @@ public class MainActivity extends Activity {
             }
         }
 
+        Log.d(TAG, "onCreate: setting up service connection");
         connection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, final IBinder binder) {
                 service = (RecordingServiceInterface) binder;
+                if (binder == null) {
+                    Log.e(TAG, "MainActivity::onServiceConnected: service is null");
+                    return;
+                }
                 toggleButton.setChecked(true);
                 startTime.setEnabled(true);
                 endTime.setEnabled(true);
@@ -81,12 +88,14 @@ public class MainActivity extends Activity {
             }
         };
 
+        Log.d(TAG, "onCreate: finding UI elements");
         toggleButton = findViewById(R.id.toggleButton);
         saveButton = findViewById(R.id.saveButton);
         startTime = findViewById(R.id.startTime);
         endTime = findViewById(R.id.endTime);
         statistics = findViewById(R.id.statistics);
 
+        Log.d(TAG, "onCreate: setting up text watcher");
         watcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -104,6 +113,7 @@ public class MainActivity extends Activity {
             }
         };
 
+        Log.d(TAG, "onCreate: setting up UI elements");
         startTime.addTextChangedListener(watcher);
         endTime.addTextChangedListener(watcher);
 
@@ -111,6 +121,7 @@ public class MainActivity extends Activity {
         startTime.setEnabled(false);
         endTime.setEnabled(false);
 
+        Log.d(TAG, "onCreate: setting up handler and refresh function");
         handler = new Handler(getMainLooper());
 
         refreshFunction = new Runnable() {
@@ -129,8 +140,12 @@ public class MainActivity extends Activity {
             }
         };
 
-        Intent intent = new Intent(this, RecordingService.class);
-        bindService(intent, connection, 0);
+        Log.d(TAG, "onCreate: done");
+
+        // Intent intent = new Intent(this, RecordingService.class);
+        // startForegroundService(intent);
+        // boolean bindResult = bindService(intent, connection, 0);
+        // Log.d(TAG, "bindService result in onCreate: " + bindResult);
     }
 
     private void checkText() {
@@ -179,7 +194,8 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, RecordingService.class);
         if (service == null) {
             startForegroundService(intent);
-            bindService(intent, connection, 0);
+            boolean bindResult = bindService(intent, connection, 0);
+            Log.d(TAG, "bindService result in onToggleButtonClick: " + bindResult);
         } else {
             unbind();
         }
@@ -189,8 +205,12 @@ public class MainActivity extends Activity {
         refresh = false;
         statistics.setText(getResources().getString(R.string.statistics));
 
+        if(connection != null) {
+            unbindService(connection);
+        } else {
+            Log.w(TAG, "unbind: connection is null");
+        }
         Intent intent = new Intent(this, RecordingService.class);
-        unbindService(connection);
         stopService(intent);
         service = null;
         toggleButton.setChecked(false);
@@ -216,14 +236,9 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        // TODO: Do this with less magic
-        if (requestCode == PERMISSIONS_BASIC && grantResults.length > 0) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) { // Record permission
-                finishAffinity();
-            }
-            if (grantResults.length > 2 && grantResults[2] != PackageManager.PERMISSION_GRANTED) { // Service permission
-                finishAffinity();
-            }
+        for(int i = 0; i < permissions.length; i++) {
+            // Log the details of the request and its results
+            Log.i(TAG, "onRequestPermissionsResult: " + permissions[i] + " " + grantResults[i]);
         }
     }
 }

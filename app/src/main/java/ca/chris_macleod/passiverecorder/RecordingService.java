@@ -59,6 +59,7 @@ public class RecordingService extends Service {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "RecordingService::onCreate called");
         super.onCreate();
 
         startForeground(1, makeNotification());
@@ -66,7 +67,7 @@ public class RecordingService extends Service {
         try {
             codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC);
         } catch (IOException exception) {
-            Log.e(TAG, exception.toString());
+            Log.e(TAG, "codec creation failed with message: " + exception.getMessage());
             return;
         }
 
@@ -80,14 +81,19 @@ public class RecordingService extends Service {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            Log.e(TAG, "RecordingService could not be created: no audio recording permission");
             return;
         }
+        Log.d(TAG, "starting audio recorder");
         recorder = new AudioRecord(MediaRecorder.AudioSource.UNPROCESSED, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 8192);
         recorder.startRecording();
+        Log.d(TAG, "audio recorder started");
 
+        Log.d(TAG, "starting encoding thread");
         encodingThread = new HandlerThread("EncodingThread");
         encodingThread.start();
         Handler handler = new Handler(encodingThread.getLooper());
+        Log.d(TAG, "encoding thread started");
 
         EncoderCallback callback = new EncoderCallback(recorder, buffer);
         codec.setCallback(callback, handler);
@@ -96,10 +102,11 @@ public class RecordingService extends Service {
         try {
             codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         } catch (MediaCodec.CodecException e) {
-            Log.e(TAG, e.toString());
+            Log.e(TAG, "codec configuration failed with message: " + e.getMessage());
             return;
         }
 
+        Log.d(TAG, "starting codec");
         codec.start();
 
         Log.d(TAG, "service created");
