@@ -29,7 +29,7 @@ back the selection without saving it to persistent storage first.
 
 ~~Passive Recorder is [available on Google Play](https://play.google.com/store/apps/details?id=ca.chris_macleod.passiverecorder).~~ (currently unavailable)
 
-An application package is also available [from the Bitbucket repository](https://bitbucket.org/leodmanx2/passive-recorder/downloads/Passive_Recorder.apk).
+An application package is also available [on GitHub](https://github.com/Leodmanx2/Passive-Recorder/releases/latest).
 You will need to enable installing apps from untrusted sources in your
 device's settings.
 
